@@ -12,7 +12,16 @@ class PhotoRepository(private val photoDao: PhotoDao, private val recentQueryDao
                 val response = apiService.searchPhotos(RetrofitClient.API_KEY, query)
                 if (response.isSuccessful && response.body() != null) {
                     val photosFromApi = response.body()!!.photos
-                    val photoEntities = photosFromApi.map { it.toPhotoEntity(query) }
+
+                    // Get current favorite statuses from the database
+                    val existingPhotos = photoDao.getPhotosByQuery(query)
+                    val favoriteIds = existingPhotos.filter { it.isFavorite }.map { it.id }.toSet()
+
+                    val photoEntities = photosFromApi.map { pexelsPhoto ->
+                        pexelsPhoto.toPhotoEntity(query).copy(
+                            isFavorite = favoriteIds.contains(pexelsPhoto.id.toString())
+                        )
+                    }
                     photoDao.insertPhotos(photoEntities)
                 }
             } catch (e: Exception) {
@@ -29,7 +38,7 @@ class PhotoRepository(private val photoDao: PhotoDao, private val recentQueryDao
                 val response = apiService.getPhoto(RetrofitClient.API_KEY, photoId)
                 if (response.isSuccessful && response.body() != null) {
                     val photoFromApi = response.body()!!
-                    val photoEntity = photoFromApi.toPhotoEntity("details") // Assign a default query key
+                    val photoEntity = photoFromApi.toPhotoEntity("details")
                     photoDao.insertPhotos(listOf(photoEntity))
                     photo = photoEntity
                 }
