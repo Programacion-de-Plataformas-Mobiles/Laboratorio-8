@@ -9,13 +9,14 @@ data class PexelsSearchResponse(
 
 // Representa un único objeto de foto de Pexels
 data class PexelsPhoto(
-    val id: Int, // Pexels usa Int para el ID
+    val id: Int,
     val photographer: String,
+    @SerializedName("photographer_url") val photographerUrl: String,
     @SerializedName("src") val sources: PexelsPhotoSources
 )
 
 // Representa las diferentes URLs de imagen
 data class PexelsPhotoSources(
-    @SerializedName("large") val large: String, // URL para vista grande/detalle
-    @SerializedName("medium") val medium: String,  // URL ideal para la grilla
+    @SerializedName("large") val large: String,
+    @SerializedName("medium") val medium: String
 )

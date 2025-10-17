@@ -1,9 +1,18 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 
     id("com.google.devtools.ksp") version "2.0.21-1.0.27"
+}
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(FileInputStream(localPropertiesFile))
 }
 
 android {
@@ -20,6 +29,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "PEXELS_API_KEY", "\"${localProperties.getProperty("pexels.api.key")}\"")
     }
 
     buildTypes {
@@ -40,6 +51,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -72,6 +84,8 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation("androidx.compose.material:material-icons-extended")
     testImplementation(libs.junit)
+    testImplementation("androidx.room:room-testing:$room_version")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.1")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

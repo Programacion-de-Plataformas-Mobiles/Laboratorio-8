@@ -1,13 +1,13 @@
 package com.example.laboratorio8.data
 
+import com.example.laboratorio8.BuildConfig
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
     private const val BASE_URL = "https://api.pexels.com/"
 
-    // REEMPLAZA "TU_API_KEY_DE_PEXELS" con tu clave real
-    const val API_KEY = "TU_API_KEY_DE_PEXELS"
+    const val API_KEY = BuildConfig.PEXELS_API_KEY
 
     val instance: PexelsApiService by lazy {
         val retrofit = Retrofit.Builder()

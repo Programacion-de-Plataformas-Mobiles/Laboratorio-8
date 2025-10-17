@@ -40,6 +40,10 @@ class PhotoRepository(private val photoDao: PhotoDao, private val recentQueryDao
         return photo
     }
 
+    suspend fun getFavoritePhotos(): List<PhotoEntity> {
+        return photoDao.getFavoritePhotos()
+    }
+
     suspend fun toggleFavorite(photoId: String, isFavorite: Boolean) {
         photoDao.setFavorite(photoId, isFavorite)
     }
@@ -61,6 +65,7 @@ fun PexelsPhoto.toPhotoEntity(query: String): PhotoEntity {
         imageUrlSmall = this.sources.medium,
         imageUrlLarge = this.sources.large,
         photographer = this.photographer,
+        authorUrl = this.photographerUrl,
         isFavorite = false
     )
 }

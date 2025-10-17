@@ -6,11 +6,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Brightness4
-import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,6 +32,7 @@ fun HomeScreen(
     var searchQuery by remember { mutableStateOf("nature") }
     var photos by remember { mutableStateOf<List<PhotoEntity>>(emptyList()) }
     var recentSearches by remember { mutableStateOf<List<String>>(emptyList()) }
+    var showFavorites by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
@@ -44,9 +41,13 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(searchQuery) {
+    LaunchedEffect(searchQuery, showFavorites) {
         delay(500) // Debounce
-        if (searchQuery.isNotBlank()) {
+        if (showFavorites) {
+            scope.launch {
+                photos = repository.getFavoritePhotos()
+            }
+        } else if (searchQuery.isNotBlank()) {
             scope.launch {
                 repository.addRecentQuery(searchQuery.trim())
                 photos = repository.getPhotos(searchQuery.trim(), isNetworkAvailable())
@@ -79,19 +80,36 @@ fun HomeScreen(
                 onValueChange = { searchQuery = it },
                 label = { Text("Buscar fotos...") },
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                singleLine = true
+                singleLine = true,
+                enabled = !showFavorites // Disable search when showing favorites
             )
 
-            LazyRow(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                items(recentSearches) { search ->
-                    Text(
-                        text = search,
-                        modifier = Modifier.clickable { searchQuery = search }.padding(8.dp)
-                    )
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(recentSearches) { search ->
+                        Text(
+                            text = search,
+                            modifier = Modifier.clickable { searchQuery = search }.padding(8.dp)
+                        )
+                    }
                 }
+                FilterChip(
+                    selected = showFavorites,
+                    onClick = { showFavorites = !showFavorites },
+                    label = { Text("Favoritos") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = if (showFavorites) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                            contentDescription = "Favoritos"
+                        )
+                    }
+                )
             }
 
             LazyVerticalGrid(
@@ -109,7 +127,7 @@ fun HomeScreen(
                                 repository.toggleFavorite(photo.id, !photo.isFavorite)
                                 val updatedPhotos = photos.map {
                                     if (it.id == photo.id) it.copy(isFavorite = !it.isFavorite) else it
-                                }
+                                }.filter { if(showFavorites) it.isFavorite else true }
                                 photos = updatedPhotos
                             }
                         }
